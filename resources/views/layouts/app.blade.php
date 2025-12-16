@@ -23,9 +23,17 @@
 
         <nav class="header-right">
             @auth
+                {{-- 出品 --}}
                 <a href="{{ route('items.create') }}" class="sell-btn">出品</a>
-                <a href="#">マイページ</a>
-                <a href="#">ログアウト</a>
+
+                {{-- マイページ --}}
+                <a href="{{ route('mypage.index') }}">マイページ</a>
+
+                {{-- ログアウト（POST必須） --}}
+                <form method="POST" action="{{ route('logout') }}" style="display:inline;">
+                    @csrf
+                    <button type="submit" class="logout-btn">ログアウト</button>
+                </form>
             @else
                 <a href="{{ route('login') }}">ログイン</a>
                 <a href="{{ route('register') }}">登録</a>

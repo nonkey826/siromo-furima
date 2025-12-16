@@ -1,75 +1,77 @@
-<<h1>マイページ</h1>
+@extends('layouts.app')
 
-{{-- プロフィール --}}
-<section>
-    <h2>プロフィール</h2>
+@section('title', 'マイページ')
 
-    <p>
-        ニックネーム：
-        {{ $profile->nickname ?? '未設定' }}
-    </p>
+@section('content')
+<div class="mypage">
 
-    <a href="{{ route('profile.edit') }}">プロフィール編集</a>
-</section>
+    <h1 class="mypage__title">マイページ</h1>
 
-<hr>
+    {{-- プロフィール --}}
+    <section class="profile">
+        <div class="profile__left">
+            <div class="profile__avatar"></div>
+        </div>
 
-{{-- タブ --}}
-<nav>
-    <a href="{{ route('mypage.index', ['page' => 'buy']) }}">購入した商品</a> |
-    <a href="{{ route('mypage.index', ['page' => 'sell']) }}">出品した商品</a> |
-    <a href="{{ route('mypage.index', ['page' => 'favorite']) }}">お気に入り</a>
-</nav>
+        <div class="profile__right">
+            <h2 class="profile__name">
+                {{ $profile->nickname ?? '未設定' }}
+            </h2>
 
-<hr>
+            {{-- 住所 --}}
+            <div class="profile__address">
+                <p>
+                    〒 {{ optional($user->address)->postal_code ?? '未設定' }}
+                </p>
+                <p>
+                    {{ optional($user->address)->address }}
+                    {{ optional($user->address)->building }}
+                </p>
+            </div>
 
-<section>
-    <h2>
-        @if ($page === 'sell')
-            出品した商品
-        @elseif ($page === 'favorite')
-            お気に入り商品
-        @else
+            <a href="{{ route('profile.edit') }}" class="profile__edit">
+                プロフィール編集
+            </a>
+        </div>
+    </section>
+
+    {{-- タブ --}}
+    <nav class="tabs">
+        <a href="{{ route('mypage.index', ['page' => 'buy']) }}"
+           class="tabs__item {{ $page === 'buy' ? 'is-active' : '' }}">
             購入した商品
-        @endif
-    </h2>
+        </a>
 
-    @if ($items->isEmpty())
-        <p>商品はありません。</p>
+        <a href="{{ route('mypage.index', ['page' => 'sell']) }}"
+           class="tabs__item {{ $page === 'sell' ? 'is-active' : '' }}">
+            出品した商品
+        </a>
 
-    {{-- 購入した商品（Purchase） --}}
-    @elseif ($page === 'buy')
-        <ul>
-            @foreach ($items as $purchase)
-                <li>
-                    <strong>{{ $purchase->item->title }}</strong>
-                    （¥{{ number_format($purchase->item->price) }}）
+        <a href="{{ route('mypage.index', ['page' => 'favorite']) }}"
+           class="tabs__item {{ $page === 'favorite' ? 'is-active' : '' }}">
+            お気に入り
+        </a>
+    </nav>
 
-                    @if ($purchase->address)
-                        <div>
-                            配送先：
-                            〒{{ $purchase->address->postal_code }}
-                            {{ $purchase->address->address }}
+    {{-- 商品一覧 --}}
+    <section class="items">
+        @if ($items->isEmpty())
+            <p class="items__empty">商品はありません。</p>
+        @else
+            <div class="items__grid">
+                @foreach ($items as $item)
+                    <div class="item-card">
+                        <div class="item-card__image">
+                            <img src="{{ $item->image }}" alt="{{ $item->title }}">
                         </div>
-                    @endif
-                </li>
-            @endforeach
-        </ul>
+                        <p class="item-card__title">
+                            {{ $item->title }}
+                        </p>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </section>
 
-    {{-- 出品・お気に入り（Item） --}}
-    @else
-        <ul>
-            @foreach ($items as $item)
-                <li>
-                    <strong>{{ $item->title }}</strong>
-                    （¥{{ number_format($item->price) }}）
-
-                    @if ($item->is_sold)
-                        <span style="color:red;">Sold</span>
-                    @endif
-                </li>
-            @endforeach
-        </ul>
-    @endif
-</section>
-
+</div>
+@endsection

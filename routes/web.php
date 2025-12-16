@@ -2,14 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\MyPageController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\AddressController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,7 +34,7 @@ Route::get('/', [ItemController::class, 'index'])
 Route::get('/items', [ItemController::class, 'index'])
     ->name('items.index');
 
-// 🔴 出品フォーム（⚠ {item} より必ず上）
+// 出品フォーム（← {item} より上が重要）
 Route::get('/items/create', [ItemController::class, 'create'])
     ->middleware('auth')
     ->name('items.create');
@@ -56,7 +54,7 @@ Route::post('/items', [ItemController::class, 'store'])
 Route::get('/items/{item}', [ItemController::class, 'show'])
     ->name('items.show');
 
-// 商品削除（出品者のみ）
+// 商品削除
 Route::delete('/items/{item}', [ItemController::class, 'destroy'])
     ->middleware('auth')
     ->name('items.destroy');
@@ -107,32 +105,11 @@ Route::get('/mypage', [MyPageController::class, 'index'])
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
-
-    Route::get('/profile/create', [ProfileController::class, 'create'])
-        ->name('profile.create');
-
-    Route::post('/profile', [ProfileController::class, 'store'])
-        ->name('profile.store');
-
     Route::get('/profile/edit', [ProfileController::class, 'edit'])
         ->name('profile.edit');
 
     Route::post('/profile/update', [ProfileController::class, 'update'])
         ->name('profile.update');
-});
-
-/*
-|--------------------------------------------------------------------------
-| 配送先住所
-|--------------------------------------------------------------------------
-*/
-Route::middleware('auth')->group(function () {
-
-    Route::get('/address', [AddressController::class, 'edit'])
-        ->name('address.edit');
-
-    Route::post('/address', [AddressController::class, 'update'])
-        ->name('address.update');
 });
 
 /*

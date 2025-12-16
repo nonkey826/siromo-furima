@@ -3,49 +3,57 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Profile;
 use Illuminate\Support\Facades\Auth;
-
-
+use App\Models\Profile;
+use App\Models\Address;
 
 class ProfileController extends Controller
 {
-    // 編集画面表示
+    /**
+     * プロフィール編集画面
+     */
     public function edit()
     {
-        $profile = Auth::user()->profile;
+        $user = Auth::user();
 
-        return view('profile.edit', compact('profile'));
+        return view('profile.edit', [
+            'profile' => $user->profile,
+            'address' => $user->address,
+        ]);
     }
 
-    // 更新処理
+    /**
+     * プロフィール更新処理
+     */
     public function update(Request $request)
     {
         $request->validate([
-            'nickname' => 'required|max:255',
+            'nickname'    => 'nullable|max:255',
+            'postal_code' => 'nullable|max:20',
+            'address'     => 'nullable|max:255',
+            'building'    => 'nullable|max:255',
         ]);
 
-        Profile::updateOrCreate(
-            ['user_id' => Auth::id()],
+        $user = Auth::user();
+
+        // プロフィール保存（なければ作成）
+        $user->profile()->updateOrCreate(
+            ['user_id' => $user->id],
             [
                 'nickname' => $request->nickname,
-                'avatar' => null,
+            ]
+        );
+
+        // 住所保存（なければ作成）
+        $user->address()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'postal_code' => $request->postal_code,
+                'address'     => $request->address,
+                'building'    => $request->building,
             ]
         );
 
         return redirect()->route('mypage.index');
     }
-
-    public function create()
-{
-    return view('profile.create');
-}
-
-public function store(Request $request)
-{
-    // いまは保存しない
-    return redirect()->route('mypage');
-}
-
-
 }

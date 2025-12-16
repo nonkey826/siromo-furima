@@ -10,25 +10,30 @@ class MyPageController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $profile = $user->profile ?? null;
+        $profile = $user->profile;
         $page = $request->query('page', 'buy');
 
         if ($page === 'sell') {
-            // 出品した商品
-            $items = $user->items;
+            // 出品した商品（Item）
+            $items = $user->items()
+                ->latest()
+                ->get();
 
         } elseif ($page === 'favorite') {
-            // お気に入り商品
+            // お気に入りした商品（Item）
             $items = $user->favorites()
                 ->with('item')
                 ->get()
-                ->pluck('item');
+                ->pluck('item')
+                ->filter();
 
         } else {
-            // 購入した商品（Purchase）
+            // 購入した商品（Item）
             $items = $user->purchases()
-                ->with(['item', 'address'])
-                ->get();
+                ->with('item')
+                ->get()
+                ->pluck('item')
+                ->filter();
         }
 
         return view('mypage.index', compact(
