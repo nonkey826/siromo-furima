@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>@yield('title', 'COACHTECH')</title>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/item.css') }}">
+
 </head>
 <body>
 

@@ -13,7 +13,11 @@ class ItemController extends Controller
      */
     public function index()
     {
-        $items = Item::latest()->get();
+        // コメント数・最新順・N+1解消
+        $items = Item::withCount('comments')
+            ->latest()
+            ->get();
+
         return view('items.index', compact('items'));
     }
 
@@ -21,15 +25,29 @@ class ItemController extends Controller
      * 商品詳細
      */
     public function show(Item $item)
-    {
-        $item->load('comments');
+{
+    // コメントと出品者情報を読み込み
+    $item->load([
+        'comments.user',
+        'user'
+    ]);
 
-        $address = Auth::check()
-            ? Auth::user()->address
-            : null;
+    // コメント一覧取得
+    $comments = $item->comments()
+        ->latest()
+        ->get();
 
-        return view('items.show', compact('item', 'address'));
-    }
+    $address = Auth::check() && Auth::user()->address
+        ? Auth::user()->address
+        : null;
+
+    return view('items.show', [
+        'item'     => $item,
+        'address'  => $address,
+        'comments' => $comments,
+    ]);
+}
+
 
     /**
      * 出品フォーム
@@ -43,47 +61,53 @@ class ItemController extends Controller
      * 商品登録
      */
     public function store(Request $request)
-{
-    // ✅ ① バリデーション（必須チェック）
-    $request->validate([
-        'title' => 'required|string',
-        'description' => 'required|string',
-        'price' => 'required|integer',
-        'image' => 'required|string',
-    ]);
+    {
+        $request->validate([
+            'title'       => 'required|string|max:255',
+            'description' => 'required|string',
+            'price'       => 'required|integer|min:1',
+            'image'       => 'required|string',
+        ]);
 
-    // ✅ ② 保存
-    Item::create([
-        'title' => $request->title,
-        'description' => $request->description,
-        'price' => $request->price,
-        'image' => $request->image,
-        'category' => $request->category,
-        'status' => $request->status,
-        'brand' => $request->brand,
-        'user_id' => Auth::id(),
-        'is_sold' => false,
-    ]);
+        Item::create([
+            'title'       => $request->title,
+            'description' => $request->description,
+            'price'       => $request->price,
+            'image'       => $request->image,
+            'category'    => $request->category,
+            'status'      => $request->status,
+            'brand'       => $request->brand,
+            'user_id'     => Auth::id(),
+            'is_sold'     => false,
+        ]);
 
-    return redirect()->route('items.index');
-}
-
-/**
- * 商品削除
- */
-public function destroy(Item $item)
-{
-    // 自分の出品じゃなければ削除させない
-    if ($item->user_id !== Auth::id()) {
-        abort(403);
+        return redirect()
+            ->route('items.index')
+            ->with('success', '商品を出品しました');
     }
 
-    $item->delete();
+    /**
+     * 商品削除
+     */
+    public function destroy(Item $item)
+    {
+        // 他人が削除できないように制御
+        if ($item->user_id !== Auth::id()) {
+            abort(403, 'この商品は削除できません');
+        }
 
-    return redirect()->route('items.index')
-        ->with('success', '商品を削除しました');
+        // 購入済み商品の削除防止
+        if ($item->is_sold) {
+            abort(403, '購入済み商品は削除できません');
+        }
+
+        $item->delete();
+
+        return redirect()
+            ->route('items.index')
+            ->with('success', '商品を削除しました');
+    }
 }
 
 
-}
 
