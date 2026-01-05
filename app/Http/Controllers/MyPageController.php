@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use App\Models\Item;
 
 class MypageController extends Controller
 {
@@ -11,48 +12,29 @@ class MypageController extends Controller
     {
         $user = Auth::user();
 
-        /**
-         * タブ制御
-         * 許可ページ = buy / sell / favorite
-         * default = buy
-         */
-        $page = $request->input('page', 'buy');
+        $page = $request->input('page', 'sell');
 
-        if (! in_array($page, ['buy', 'sell', 'favorite'])) {
+        if (! in_array($page, ['sell', 'buy'])) {
             abort(404);
         }
 
-        /**
-         * 出品商品（最新順）
-         */
-        $sellItems = $user->items()
+        // 出品した商品
+        $sellItems = Item::where('user_id', $user->id)
             ->latest()
             ->get();
 
-        /**
-         * 購入商品（最新順）
-         */
-        $buyItems = $user->purchases()
-            ->with([
-                'item.user',       // 出品者
-                'item.comments',   // コメント数後で使えるように
-            ])
+        // 購入した商品（buyer_id を見る）
+        $buyItems = Item::where('buyer_id', $user->id)
             ->latest()
-            ->get()
-            ->pluck('item');
+            ->get();
 
-        /**
-         * 今後 favorite 実装する時の布石
-         */
-        $favoriteItems = collect(); // 空データ保持
+        $profile = $user->profile;
 
         return view('mypage.index', compact(
-            'user',
             'page',
             'sellItems',
             'buyItems',
-            'favoriteItems'
+            'profile'
         ));
     }
 }
-

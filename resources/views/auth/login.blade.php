@@ -3,64 +3,66 @@
 @section('title', 'ログイン')
 
 @section('content')
+<div style="display:flex;justify-content:center;align-items:center;min-height:70vh;">
+    <div style="width:420px;padding:40px;">
 
-<div class="container py-5" style="max-width:480px;">
+        <h1 style="text-align:center;margin-bottom:30px;">ログイン</h1>
 
-    <h1 class="mb-4 text-center fw-bold">ログイン</h1>
+        {{-- バリデーションエラー表示 --}}
+        @if ($errors->any())
+            <div style="color:red;margin-bottom:20px;">
+                <ul style="padding-left:20px;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-    {{-- エラー --}}
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            ログイン情報が正しくありません。
-        </div>
-    @endif
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
 
+            <div style="margin-bottom:20px;">
+                <label style="display:block;margin-bottom:5px;">メールアドレス</label>
+                <input
+                    type="email"
+                    name="email"
+                    value="{{ old('email') }}"
+                    style="width:100%;padding:10px;"
+                >
+            </div>
 
-    <form method="POST" action="{{ route('login') }}" class="card p-4 shadow-sm">
-        @csrf
+            <div style="margin-bottom:30px;">
+                <label style="display:block;margin-bottom:5px;">パスワード</label>
+                <input
+                    type="password"
+                    name="password"
+                    style="width:100%;padding:10px;"
+                >
+            </div>
 
-        {{-- メールアドレス --}}
-        <div class="mb-3">
-            <label class="form-label">メールアドレス</label>
-            <input id="email" type="email"
-                   class="form-control @error('email') is-invalid @enderror"
-                   name="email"
-                   value="{{ old('email') }}"
-                   required autocomplete="email" autofocus>
+            <button
+                type="submit"
+                style="
+                    width:100%;
+                    padding:12px;
+                    background:#ef6461;
+                    color:#fff;
+                    border:none;
+                    font-size:16px;
+                    font-weight:bold;
+                    cursor:pointer;
+                ">
+                ログインする
+            </button>
+        </form>
 
-            @error('email')
-                <small class="text-danger">{{ $message }}</small>
-            @enderror
-        </div>
-
-        {{-- パスワード --}}
-        <div class="mb-3">
-            <label class="form-label">パスワード</label>
-            <input id="password" type="password"
-                   class="form-control @error('password') is-invalid @enderror"
-                   name="password"
-                   required autocomplete="current-password">
-
-            @error('password')
-                <small class="text-danger">{{ $message }}</small>
-            @enderror
-        </div>
-
-        {{-- ログインボタン --}}
-        <button type="submit" class="btn btn-primary w-100 py-2 mt-2">
-            ログイン
-        </button>
-
-        {{-- 新規登録 --}}
-        <div class="text-center mt-3">
-            <a href="{{ route('register') }}" class="text-decoration-none">
-                新規登録はこちら
+        <div style="text-align:center;margin-top:20px;">
+            <a href="{{ route('register') }}" style="color:#1e73ff;">
+                会員登録はこちら
             </a>
         </div>
 
-    </form>
-
+    </div>
 </div>
-
 @endsection
-

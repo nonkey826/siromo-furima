@@ -1,102 +1,104 @@
 @extends('layouts.app')
 
-@section('title', '住所変更')
+@section('title', '住所の変更')
 
 @section('content')
+<div style="max-width:900px;margin:40px auto;">
+    <h1 style="font-size:22px;font-weight:700;margin-bottom:24px;">
+        住所の変更
+    </h1>
 
-<div class="container py-5">
-
-    <h1 class="mb-4">配送先住所の編集</h1>
-
-    {{-- ▼成功メッセージ --}}
+    {{-- フラッシュメッセージ --}}
     @if (session('success'))
-        <div class="alert alert-success">
+        <div style="background:#e6ffed;border:1px solid #a7f3d0;padding:10px 14px;margin-bottom:16px;font-size:14px;">
             {{ session('success') }}
         </div>
     @endif
 
-    {{-- ▼エラー表示 --}}
+    @if (session('error'))
+        <div style="background:#fee2e2;border:1px solid #fecaca;padding:10px 14px;margin-bottom:16px;font-size:14px;">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    {{-- バリデーションエラー --}}
     @if ($errors->any())
-        <div class="alert alert-danger">
+        <div style="background:#fee2e2;border:1px solid #fecaca;padding:10px 14px;margin-bottom:16px;font-size:14px;">
             入力内容を確認してください。
         </div>
     @endif
 
-    <form action="{{ route('address.update') }}" method="POST" class="card p-4">
-        @csrf
-        @method('PUT')
+    <div style="
+        background:#fff;
+        padding:32px 40px;
+        border-radius:6px;
+        box-shadow:0 0 8px rgba(0,0,0,0.06);
+    ">
+        <form method="POST" action="{{ route('address.update') }}">
+            @csrf
+            @method('PUT')
 
-        {{-- 郵便番号 --}}
-        <div class="mb-3">
-            <label class="form-label">郵便番号</label>
-            <input
-                type="text"
-                name="zipcode"
-                class="form-control"
-                value="{{ old('zipcode', $address->zipcode ?? '') }}"
-            >
-        </div>
+            {{-- 🔑 購入画面から来た場合の商品ID --}}
+            @if(request('item'))
+                <input type="hidden" name="item_id" value="{{ request('item') }}">
+            @endif
 
-        {{-- 都道府県 --}}
-        <div class="mb-3">
-            <label class="form-label">都道府県</label>
-            <input
-                type="text"
-                name="prefecture"
-                class="form-control"
-                value="{{ old('prefecture', $address->prefecture ?? '') }}"
-            >
-        </div>
+            {{-- 郵便番号 --}}
+            <div style="margin-bottom:20px;">
+                <label style="display:block;font-size:14px;margin-bottom:6px;">
+                    郵便番号
+                </label>
+                <input
+                    type="text"
+                    name="zipcode"
+                    value="{{ old('zipcode', $address->zipcode ?? '') }}"
+                    style="width:100%;max-width:480px;padding:8px 10px;border:1px solid #ccc;border-radius:4px;"
+                >
+            </div>
 
-        {{-- 市区町村 --}}
-        <div class="mb-3">
-            <label class="form-label">市区町村</label>
-            <input
-                type="text"
-                name="city"
-                class="form-control"
-                value="{{ old('city', $address->city ?? '') }}"
-            >
-        </div>
+            {{-- 住所 --}}
+            <div style="margin-bottom:20px;">
+                <label style="display:block;font-size:14px;margin-bottom:6px;">
+                    住所
+                </label>
+                <input
+                    type="text"
+                    name="address"
+                    value="{{ old('address', $address->address ?? '') }}"
+                    style="width:100%;max-width:480px;padding:8px 10px;border:1px solid #ccc;border-radius:4px;"
+                >
+            </div>
 
-        {{-- 丁目番地 --}}
-        <div class="mb-3">
-            <label class="form-label">丁目・番地</label>
-            <input
-                type="text"
-                name="street"
-                class="form-control"
-                value="{{ old('street', $address->street ?? '') }}"
-            >
-        </div>
+            {{-- 建物名 --}}
+            <div style="margin-bottom:32px;">
+                <label style="display:block;font-size:14px;margin-bottom:6px;">
+                    建物名
+                </label>
+                <input
+                    type="text"
+                    name="building"
+                    value="{{ old('building', $address->building ?? '') }}"
+                    style="width:100%;max-width:480px;padding:8px 10px;border:1px solid #ccc;border-radius:4px;"
+                >
+            </div>
 
-        {{-- 建物名 --}}
-        <div class="mb-3">
-            <label class="form-label">建物名・部屋番号 (任意)</label>
-            <input
-                type="text"
-                name="building"
-                class="form-control"
-                value="{{ old('building', $address->building ?? '') }}"
-            >
-        </div>
-
-        <div class="mt-4 d-flex gap-3">
-
-            <button class="btn btn-primary w-50">
-                更新する
-            </button>
-
-            <a href="{{ url()->previous() }}"
-   class="btn btn-secondary w-50 text-center">
-    戻る
-</a>
-
-
-        </div>
-
-    </form>
-
+            <div style="text-align:center;">
+                <button
+                    type="submit"
+                    style="
+                        min-width:200px;
+                        padding:10px 24px;
+                        background:#ff6f6f;
+                        color:#fff;
+                        font-weight:700;
+                        border:none;
+                        border-radius:4px;
+                    "
+                >
+                    更新する
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
-
 @endsection

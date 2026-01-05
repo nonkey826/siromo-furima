@@ -3,14 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
-use App\Models\User;
-
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\MypageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\LikeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,38 +20,8 @@ use App\Http\Controllers\PurchaseController;
 // =========================
 // top
 // =========================
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [ItemController::class, 'index']);
 
-// =========================
-// auth dummy routes（開発用）
-// =========================
-Route::get('/login', function () {
-    return 'login';
-})->name('login');
-
-Route::post('/logout', function () {
-    Auth::logout();
-    return redirect('/');
-})->name('logout');
-
-Route::get('/dev-login', function () {
-
-    $user = User::first();
-
-    if (! $user) {
-        $user = User::create([
-            'name'     => 'test',
-            'email'    => 'test@example.com',
-            'password' => bcrypt('password'),
-        ]);
-    }
-
-    Auth::login($user);
-
-    return redirect()->route('items.index');
-});
 
 // =========================
 // auth required routes
@@ -86,32 +55,28 @@ Route::middleware(['auth'])->group(function () {
 
 
     // =========================
-    // purchase（購入機能一式）
+    // purchase（購入機能）
     // =========================
 
-//別の人で購入
+    // 開発用：購入者ログイン
     Route::get('/dev-login-buyer', function () {
-    Auth::login(\App\Models\User::where('email', 'buyer@example.com')->first());
-    return redirect()->route('items.index');
-});
+        Auth::login(
+            \App\Models\User::where('email', 'buyer@example.com')->first()
+        );
+        return redirect()->route('items.index');
+    });
 
-
-    // ① 支払い選択画面
+    // ① 購入画面
     Route::get('/purchase/{item}/input', [PurchaseController::class, 'input'])
         ->name('purchase.input');
 
-    // ② 入力内容確認画面
-    Route::post('/purchase/{item}/confirm', [PurchaseController::class, 'confirm'])
-        ->name('purchase.confirm');
-
-    // ③ 購入確定
+    // ② 購入確定（Stripe Checkout）
     Route::post('/items/{item}/purchase', [PurchaseController::class, 'store'])
         ->name('item.purchase');
 
-    // ④ 完了画面
-    Route::get('/purchase/{item}/complete', function (\App\Models\Item $item) {
-        return view('purchase.complete', compact('item'));
-    })->name('purchase.complete');
+    // ③ 購入完了
+    Route::get('/purchase/{item}/complete', [PurchaseController::class, 'complete'])
+        ->name('purchase.complete');
 
 
     // =========================
@@ -132,7 +97,7 @@ Route::middleware(['auth'])->group(function () {
 
 
     // =========================
-    // address（配送先住所変更）
+    // address
     // =========================
     Route::get('/address/edit', [AddressController::class, 'edit'])
         ->name('address.edit');
@@ -140,11 +105,35 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/address', [AddressController::class, 'update'])
         ->name('address.update');
 
+
+    // =========================
+    // dashboard
+    // =========================
+    Route::get('/dashboard', function () {
+        return redirect()->route('items.index');
+    })->name('dashboard');
 });
+
+
+// =========================
+// like（いいね機能）
+// =========================
+Route::middleware(['auth'])->group(function () {
+
+    Route::post('/items/{item}/like', [LikeController::class, 'store'])
+        ->name('likes.store');
+
+    Route::delete('/items/{item}/like', [LikeController::class, 'destroy'])
+        ->name('likes.destroy');
+
+    Route::get('/mypage/likes', [LikeController::class, 'index'])
+        ->name('likes.index');
+});
+
 
 require __DIR__ . '/auth.php';
 
-Auth::routes();
+
 
 
 

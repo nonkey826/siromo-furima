@@ -6,18 +6,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-use App\Models\Item;
-use App\Models\Purchase;
-use App\Models\Favorite;
-use App\Models\Profile;
-use App\Models\Address;
-
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
     /**
-     * 一括代入を許可するカラム（← 登録エラーの原因）
+     * 一括代入を許可するカラム
      */
     protected $fillable = [
         'name',
@@ -34,7 +28,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * 型変換（Laravel 12 推奨）
+     * 型変換
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -42,37 +36,60 @@ class User extends Authenticatable
     ];
 
     // =========================
-    // リレーション（ここはそのまま）
+    // リレーション
     // =========================
 
-    // 出品した商品
+    /**
+     * ユーザーが出品した商品
+     */
     public function items()
     {
         return $this->hasMany(Item::class);
     }
 
-    // 購入履歴
+    /**
+     * ユーザーの購入履歴
+     */
     public function purchases()
     {
         return $this->hasMany(Purchase::class);
     }
 
-    // お気に入り
+    /**
+     * お気に入り登録した商品
+     */
     public function favorites()
     {
         return $this->hasMany(Favorite::class);
     }
 
-    // プロフィール
+    /**
+     * ユーザーのプロフィール情報
+     * → profiles テーブルと1対1
+     */
     public function profile()
     {
         return $this->hasOne(Profile::class);
     }
 
-    // 住所
+    /**
+     * ユーザーの住所情報
+     * → addresses テーブルと1対1
+     */
     public function address()
     {
         return $this->hasOne(Address::class);
     }
+
+
+    //いいね
+    public function likedItems()
+{
+    return $this->belongsToMany(
+        \App\Models\Item::class,
+        'likes'
+    )->withTimestamps();
+}
+
 }
 

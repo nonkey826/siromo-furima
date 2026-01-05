@@ -7,9 +7,6 @@ use Illuminate\Support\Facades\Auth;
 
 class AddressController extends Controller
 {
-    /**
-     * 住所編集画面
-     */
     public function edit()
     {
         $user = Auth::user();
@@ -18,39 +15,36 @@ class AddressController extends Controller
         return view('address.edit', compact('address'));
     }
 
-    /**
-     * 更新処理
-     */
     public function update(Request $request)
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        $validated = $request->validate([
-            'zipcode'    => 'nullable',
-            'prefecture' => 'nullable',
-            'city'       => 'nullable',
-            'street'     => 'nullable',
-        ]);
+    $data = $request->validate([
+        'zipcode'  => 'required|string',
+        'address'  => 'required|string',
+        'building' => 'nullable|string',
+        'item_id'  => 'nullable|integer',
+    ]);
 
-        $address = $user->address()->first();
+    $itemId = $data['item_id'] ?? null;
+    unset($data['item_id']);
 
-        // DB書き込み内容
-        $data = [
-            'zipcode'    => $validated['zipcode'] ?? null,
-            'prefecture' => $validated['prefecture'] ?? null,
-            'city'       => $validated['city'] ?? null,
-            'street'     => $validated['street'] ?? null,
-        ];
+    $address = $user->address()->first();
 
-        // update or create
-        if ($address) {
-            $address->update($data);
-        } else {
-            $user->address()->create($data);
-        }
-
-        return redirect()
-            ->route('address.edit')
-            ->with('success', '住所を更新しました！');
+    if ($address) {
+        $address->update($data);
+    } else {
+        $user->address()->create($data);
     }
+
+    // ✅ 購入フローから来た場合
+    if ($itemId) {
+        return redirect()->route('purchase.input', $itemId);
+    }
+
+    // ✅ 通常ルート
+    return redirect()->route('mypage.index');
+}
+
+
 }

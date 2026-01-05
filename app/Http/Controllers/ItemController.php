@@ -9,30 +9,51 @@ use Illuminate\Support\Facades\Auth;
 class ItemController extends Controller
 {
     /**
-     * 商品一覧
+     * 商品一覧（おすすめ / マイリスト）
      */
-    public function index()
-    {
-        // コメント数・最新順・N+1解消
-        $items = Item::withCount('comments')
-            ->latest()
-            ->get();
+    public function index(Request $request)
+{
+    $query = Item::withCount(['comments', 'likedUsers'])
+        ->latest();
 
-        return view('items.index', compact('items'));
+    // ログイン中は「自分の商品」を除外
+    if (Auth::check()) {
+        $query->where('user_id', '!=', Auth::id());
+
+        // マイリストタブ
+        if ($request->query('tab') === 'like') {
+            $query->whereHas('likedUsers', function ($q) {
+                $q->where('user_id', Auth::id());
+            });
+        }
     }
+
+    // 🔍
+    if ($request->filled('keyword')) {
+        $keyword = $request->keyword;
+
+        $query->where(function ($q) use ($keyword) {
+            $q->where('title', 'like', "%{$keyword}%")
+              ->orWhere('description', 'like', "%{$keyword}%");
+        });
+    }
+
+    $items = $query->get();
+
+    return view('items.index', compact('items'));
+}
 
     /**
      * 商品詳細
      */
     public function show(Item $item)
 {
-    // コメントと出品者情報を読み込み
     $item->load([
         'comments.user',
-        'user'
+        'user',
+        'likedUsers', // ★追加
     ]);
 
-    // コメント一覧取得
     $comments = $item->comments()
         ->latest()
         ->get();
@@ -47,7 +68,6 @@ class ItemController extends Controller
         'comments' => $comments,
     ]);
 }
-
 
     /**
      * 出品フォーム
@@ -91,12 +111,10 @@ class ItemController extends Controller
      */
     public function destroy(Item $item)
     {
-        // 他人が削除できないように制御
         if ($item->user_id !== Auth::id()) {
             abort(403, 'この商品は削除できません');
         }
 
-        // 購入済み商品の削除防止
         if ($item->is_sold) {
             abort(403, '購入済み商品は削除できません');
         }
@@ -107,7 +125,9 @@ class ItemController extends Controller
             ->route('items.index')
             ->with('success', '商品を削除しました');
     }
-}
 
+   
+
+}
 
 

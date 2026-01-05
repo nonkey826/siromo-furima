@@ -11,9 +11,6 @@ class Item extends Model
 {
     use HasFactory;
 
-    /**
-     * itemsテーブルに存在するカラムと完全一致させる
-     */
     protected $fillable = [
         'user_id',
         'title',
@@ -27,7 +24,7 @@ class Item extends Model
     ];
 
     /**
-     * 出品者（usersテーブル）
+     * 出品者
      */
     public function user()
     {
@@ -35,18 +32,22 @@ class Item extends Model
     }
 
     /**
-     * お気に入りしたユーザー（favorites 中間テーブル）
-     */
-    public function favoritedUsers()
-    {
-        return $this->belongsToMany(User::class, 'favorites');
-    }
-
-    /**
-     * 商品へのコメント（commentsテーブル）
+     * コメント
      */
     public function comments()
     {
         return $this->hasMany(Comment::class);
     }
+
+    /**
+     * この商品をいいねしたユーザー
+     */
+    public function likedUsers()
+    {
+        return $this->belongsToMany(
+            User::class,
+            'likes'
+        )->withTimestamps();
+    }
 }
+
