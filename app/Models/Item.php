@@ -21,6 +21,7 @@ class Item extends Model
         'category',
         'status',
         'brand',
+        'buyer_id',
     ];
 
     /**
