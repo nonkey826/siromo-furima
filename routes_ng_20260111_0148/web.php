@@ -1,0 +1,123 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+
+use App\Http\Controllers\ItemController;
+use App\Http\Controllers\MyPageController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\AddressController;
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\LikeController;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
+
+// =========================
+// top
+// =========================
+Route::get('/', [ItemController::class, 'index'])
+    ->name('top');
+
+// =========================
+// auth required routes
+// =========================
+Route::middleware(['auth'])->group(function () {
+
+    // =========================
+    // items
+    // =========================
+    Route::get('/items', [ItemController::class, 'index'])
+        ->name('items.index');
+
+    Route::get('/items/create', [ItemController::class, 'create'])
+        ->name('items.create');
+
+    Route::post('/items', [ItemController::class, 'store'])
+        ->name('items.store');
+
+    Route::get('/items/{item}', [ItemController::class, 'show'])
+        ->name('items.show');
+
+    Route::delete('/items/{item}', [ItemController::class, 'destroy'])
+        ->name('items.destroy');
+
+    // =========================
+    // comments
+    // =========================
+    Route::post('/items/{item}/comments', [CommentController::class, 'store'])
+        ->name('comments.store');
+
+    // =========================
+    // purchase（Stripe決済）
+    // =========================
+
+    // ① 購入画面
+    Route::get('/purchase/{item}', [PurchaseController::class, 'input'])
+        ->name('purchase.input');
+
+    // ② PaymentIntent 作成
+    Route::post('/purchase/{item}', [PurchaseController::class, 'store'])
+        ->name('purchase.store');
+
+    // ③ 決済完了（購入確定）
+    Route::get('/purchase/{item}/complete', [PurchaseController::class, 'complete'])
+        ->name('purchase.complete');
+
+    // =========================
+    // mypage
+    // =========================
+    Route::get('/mypage', [MyPageController::class, 'index'])
+        ->name('mypage.index');
+
+    // =========================
+    // profile
+    // =========================
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
+    Route::put('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+
+    // =========================
+    // address
+    // =========================
+    Route::get('/address/edit', [AddressController::class, 'edit'])
+        ->name('address.edit');
+
+    Route::put('/address', [AddressController::class, 'update'])
+        ->name('address.update');
+
+    // =========================
+    // dashboard
+    // =========================
+    Route::get('/dashboard', function () {
+        return redirect()->route('items.index');
+    })->name('dashboard');
+});
+
+// =========================
+// like（いいね機能）
+// =========================
+Route::middleware(['auth'])->group(function () {
+
+    Route::post('/items/{item}/like', [LikeController::class, 'store'])
+        ->name('likes.store');
+
+    Route::delete('/items/{item}/like', [LikeController::class, 'destroy'])
+        ->name('likes.destroy');
+
+    Route::get('/mypage/likes', [LikeController::class, 'index'])
+        ->name('likes.index');
+});
+
+// =========================
+// auth routes
+// =========================
+require __DIR__ . '/auth.php';
+
+

@@ -3,101 +3,99 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
-use App\Models\Purchase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Stripe\Stripe;
+use Stripe\PaymentIntent;
 
 class PurchaseController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     /**
-     * 支払い方法入力画面
+     * 購入画面（入力・確認）
      */
     public function input(Item $item)
     {
         $user = Auth::user();
 
-        // 自分の商品は買えない
-        if ($item->user_id === $user->id) {
-            abort(403, '自分の商品は購入できません');
+        // 売り切れ or 自分の商品は不可
+        if ($item->is_sold || $item->user_id === $user->id) {
+            return redirect()
+                ->route('items.show', $item)
+                ->with('error', 'この商品は購入できません');
         }
 
-        // 売却済みは購入不可
-        if ($item->is_sold) {
-            abort(403, 'この商品は売り切れています');
-        }
+        $address = $user->address()->first();
 
         return view('purchase.input', [
-            'item'    => $item,
-            'user'    => $user,
-            'address' => $user->address()->first(),
+            'item' => $item,
+            'address' => $address,
         ]);
     }
 
     /**
-     * 購入確認画面
-     */
-    public function confirm(Request $request, Item $item)
-    {
-        $user = auth()->user();
-
-        $request->validate([
-            'payment_method' => 'required',
-        ]);
-
-        return view('purchase.confirm', [
-            'item'          => $item,
-            'paymentMethod' => $request->payment_method,
-            'user'          => $user,
-            'address'       => $user->address()->first(),
-        ]);
-    }
-
-    /**
-     * 購入確定処理
+     * Stripe PaymentIntent 作成
      */
     public function store(Request $request, Item $item)
     {
         $user = Auth::user();
 
-        $request->validate([
-            'payment_method' => 'required|string',
-        ]);
-
-        // 自分の商品購入禁止
-        if ($item->user_id === $user->id) {
-            abort(403, '自分の商品は購入できません');
+        // 二重購入・自己購入防止
+        if ($item->is_sold || $item->user_id === $user->id) {
+            return redirect()
+                ->route('items.show', $item)
+                ->with('error', 'この商品は購入できません');
         }
 
-        // 売り切れ禁止
-        if ($item->is_sold) {
-            abort(403, '商品はすでに売れています');
-        }
-
-        // 住所存在チェック
+        // 住所必須
         $address = $user->address()->first();
-
         if (!$address) {
             return redirect()
                 ->route('address.edit')
                 ->with('error', '配送先住所を登録してください');
         }
 
-        // 購入レコード保存
-        Purchase::create([
-            'user_id'        => $user->id,
-            'item_id'        => $item->id,
-            'address_id'     => $address->id,
-            'payment_method' => $request->payment_method,
+        // Stripe 設定
+        Stripe::setApiKey(config('services.stripe.secret'));
+
+        // PaymentIntent 作成（JPYは ×100 不要）
+        $paymentIntent = PaymentIntent::create([
+            'amount' => $item->price,
+            'currency' => 'jpy',
+            'metadata' => [
+                'item_id' => $item->id,
+                'buyer_id' => $user->id,
+            ],
         ]);
 
-        // 商品を売却済みに変更
-        $item->update([
-            'is_sold' => true,
+        return view('purchase.confirm', [
+            'item' => $item,
+            'address' => $address,
+            'clientSecret' => $paymentIntent->client_secret,
+            'stripeKey' => config('services.stripe.key'),
         ]);
+    }
 
-        return redirect()
-            ->route('purchase.complete', $item)
-            ->with('success', '購入が完了しました');
+    /**
+     * 決済完了（Stripe 成功後）
+     */
+    public function complete(Item $item)
+    {
+        // 未購入状態のみ更新（事故防止）
+        if (!$item->is_sold) {
+            $item->update([
+                'is_sold' => true,
+                'buyer_id' => Auth::id(),
+            ]);
+        }
+
+        return view('purchase.complete', [
+            'item' => $item,
+        ]);
     }
 }
 

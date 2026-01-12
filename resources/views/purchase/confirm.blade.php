@@ -1,139 +1,171 @@
 @extends('layouts.app')
 
-@section('title', '購入確認')
-
 @section('content')
+<div class="payment-wrap">
+    <div class="payment-card">
+        <h2 class="payment-title">決済画面</h2>
 
-<div class="container py-5">
-
-    <h1 class="mb-4">購入内容の確認</h1>
-
-    <div class="row">
-
-        {{-- 左 --}}
-        <div class="col-md-8">
-
-            {{-- 商品 --}}
-            <div class="card mb-4">
-                <div class="row g-0">
-
-                    <div class="col-md-4 p-3 d-flex align-items-center justify-content-center">
-
-                        <img 
-                            src="{{ $item->image }}"
-                            class="img-fluid"
-                            style="max-height:150px;"
-                            alt="{{ $item->title }}"
-                        >
-
-                    </div>
-
-                    <div class="col-md-8 p-3">
-
-                        <h5>{{ $item->title }}</h5>
-
-                        <p>
-                            価格：
-                            <strong>
-                                ¥{{ number_format($item->price) }}
-                            </strong>
-                        </p>
-
-                    </div>
-
-                </div>
-            </div>
-
-            {{-- 配送先 --}}
-            <div class="card p-3 mb-4">
-
-                <h5 class="mb-3">配送先</h5>
-
-                @if(!empty($address))
-
-                    <p class="mb-0">
-                        〒{{ $address->postal_code }}<br>
-                        {{ $address->address }}<br>
-
-                        @if(!empty($address->building))
-                            {{ $address->building }}
-                        @endif
-                    </p>
-
-                    <a href="{{ route('address.edit') }}" class="d-inline-block mt-2">
-                        変更する
-                    </a>
-
-                @else
-
-                    <p class="text-danger">
-                        配送先住所が登録されていません
-                    </p>
-
-                    <a href="{{ route('address.edit') }}" class="d-inline-block mt-2">
-                        登録する
-                    </a>
-
-                @endif
-
-            </div>
-
-            {{-- 戻るボタン --}}
-            <div class="d-flex gap-3">
-
-                {{-- 支払い方法に戻る --}}
-                <a href="{{ route('purchase.input', $item) }}"
-                    class="btn btn-outline-secondary w-50">
-                    支払い方法選択に戻る
-                </a>
-
-                {{-- 商品詳細に戻る --}}
-                <a href="{{ route('items.show', $item) }}"
-                    class="btn btn-outline-dark w-50">
-                    商品詳細に戻る
-                </a>
-
-            </div>
-
+        <div class="item-box">
+            <div class="item-name">{{ $item->name }}</div>
+            <div class="item-price">¥{{ number_format($item->price) }}</div>
         </div>
 
+        <form id="payment-form">
+            <label class="payment-label" for="card-element">クレジットカード</label>
+            <div id="card-element" class="card-element"></div>
 
-        {{-- 右 --}}
-        <div class="col-md-4">
+            <button id="submit" class="pay-btn" type="submit">
+                ¥{{ number_format($item->price) }} を支払う
+            </button>
 
-            <div class="card p-4">
+            <p id="card-error" class="card-error" role="alert" style="display:none;"></p>
+        </form>
 
-                <h5 class="mb-3">支払い金額</h5>
-
-                <p class="fs-4 fw-bold">
-                    ¥{{ number_format($item->price) }}
-                </p>
-
-                <form action="{{ route('item.purchase', $item) }}" method="POST">
-
-                    @csrf
-
-                    <input 
-                        type="hidden" 
-                        name="payment_method" 
-                        value="{{ $paymentMethod }}"
-                    >
-
-                    <button 
-                        class="btn btn-danger w-100 py-2 mt-3"
-                    >
-                        購入を確定する
-                    </button>
-
-                </form>
-
-            </div>
-
-        </div>
-
+        <p class="payment-note">
+            ※ テスト決済です（本番の請求は発生しません）
+        </p>
     </div>
-
 </div>
 
+<style>
+.payment-wrap{
+    max-width: 520px;
+    margin: 40px auto;
+    padding: 0 16px;
+}
+.payment-card{
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,.08);
+    padding: 24px;
+}
+.payment-title{
+    text-align: center;
+    margin: 0 0 16px;
+    font-size: 18px;
+}
+.item-box{
+    background: #f7f7f7;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 18px;
+}
+.item-name{
+    font-weight: 700;
+    font-size: 15px;
+}
+.item-price{
+    margin-top: 6px;
+    font-size: 22px;
+    font-weight: 800;
+}
+.payment-label{
+    display: block;
+    font-size: 13px;
+    margin: 0 0 8px;
+    color: #333;
+}
+.card-element{
+    padding: 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    background: #fff;
+    margin-bottom: 14px;
+}
+.pay-btn{
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    background: #635bff;
+    color: #fff;
+}
+.pay-btn:hover{
+    filter: brightness(0.95);
+}
+.pay-btn:disabled{
+    opacity: .6;
+    cursor: not-allowed;
+}
+.card-error{
+    margin: 12px 0 0;
+    color: #d93025;
+    font-size: 13px;
+}
+.payment-note{
+    margin: 14px 0 0;
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+}
+</style>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+const stripe = Stripe(@json($stripeKey));
+
+// 見た目をStripeっぽくする（最低限）
+const elements = stripe.elements({
+    appearance: {
+        theme: 'stripe',
+        variables: {
+            colorPrimary: '#635bff',
+            borderRadius: '8px',
+            fontSizeBase: '15px',
+        }
+    }
+});
+
+const card = elements.create('card');
+card.mount('#card-element');
+
+const form = document.getElementById('payment-form');
+const submitBtn = document.getElementById('submit');
+const errorEl = document.getElementById('card-error');
+
+const setError = (msg) => {
+    if (!msg) {
+        errorEl.style.display = 'none';
+        errorEl.textContent = '';
+        return;
+    }
+    errorEl.style.display = 'block';
+    errorEl.textContent = msg;
+};
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = '処理中...';
+
+    const { error, paymentIntent } = await stripe.confirmCardPayment(
+        @json($clientSecret),
+        { payment_method: { card } }
+    );
+
+    if (error) {
+        setError(error.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = '¥{{ number_format($item->price) }} を支払う';
+        return;
+    }
+
+    // 成功時のみ遷移
+    if (paymentIntent && paymentIntent.status === 'succeeded') {
+        window.location.href = @json(route('purchase.complete', $item));
+        return;
+    }
+
+    // それ以外（例: requires_action 等）
+    setError('決済が完了していません。もう一度お試しください。');
+    submitBtn.disabled = false;
+    submitBtn.textContent = '¥{{ number_format($item->price) }} を支払う';
+});
+</script>
 @endsection
 
